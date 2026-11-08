@@ -6,6 +6,8 @@ Notable changes to `go-editorlocator`. The format follows
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-11-08
+
 ### Added
 
 - `Find` lists the installed code editors and IDEs, one entry per program and one per installed
@@ -15,4 +17,5 @@ Notable changes to `go-editorlocator`. The format follows
 - `FileArgs` builds the arguments that open a file at a line and column in a given program.
 - `SolutionIn` reports a folder's single solution file.
 
-[Unreleased]: https://github.com/Rethunk-Tech/go-editorlocator/commits/main
+[Unreleased]: https://github.com/Rethunk-Tech/go-editorlocator/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/Rethunk-Tech/go-editorlocator/releases/tag/v0.1.0
