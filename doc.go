@@ -1,2 +1,3 @@
-// Package editorlocator find installed code editors and IDEs and open a folder or file in one.
+// Package editorlocator finds installed code editors and IDEs and builds the command line to open a folder, a
+// solution or a file at a line in one.
 package editorlocator
