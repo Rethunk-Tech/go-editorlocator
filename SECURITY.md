@@ -46,8 +46,8 @@ This package reads the machine it runs on and returns strings; it never runs a p
   skipped.
 - **Editor metadata.** `versioned` reads a JetBrains install's `product-info.json`. A missing,
   unreadable or malformed file must leave the plain name rather than fail the scan.
-- **`KindOf` and the argument builders.** All four are pure string functions. No input — including
-  an empty path, a name with separators, or a negative line — may panic, and `FileArgs` must always
+- **`KindOf` and the argument builders.** All four are pure string functions. No input, including
+  an empty path, a name with separators, or a negative line; may panic, and `FileArgs` must always
   return at least the file, so a caller that shells out cannot silently start an editor with no
   path.
 - **`SolutionIn`.** A directory holding symlinks named `*.sln` must not make it follow or resolve
