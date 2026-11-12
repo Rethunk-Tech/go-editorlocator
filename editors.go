@@ -211,8 +211,12 @@ func commandExe(command string) string {
 		exe, _, _ := strings.Cut(rest, `"`)
 		return exe
 	}
-	if at := strings.Index(strings.ToLower(command), ".exe"); at >= 0 {
-		return command[:at+len(".exe")]
+	// .exe is ASCII; ToLower can grow a string (İ → i̇), so an index into the
+	// lowercased copy is not a valid slice of command.
+	for i := 0; i+len(".exe") <= len(command); i++ {
+		if strings.EqualFold(command[i:i+len(".exe")], ".exe") {
+			return command[:i+len(".exe")]
+		}
 	}
 	return ""
 }
