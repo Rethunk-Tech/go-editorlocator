@@ -6,6 +6,12 @@ Notable changes to `go-editorlocator`. The format follows
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-11-12
+
+### Fixed
+
+- A command line holding a character that changes length when lowercased no longer yields a wrong executable path.
+
 ## [0.1.0] - 2026-11-08
 
 ### Added
@@ -17,5 +23,6 @@ Notable changes to `go-editorlocator`. The format follows
 - `FileArgs` builds the arguments that open a file at a line and column in a given program.
 - `SolutionIn` reports a folder's single solution file.
 
-[Unreleased]: https://github.com/Rethunk-Tech/go-editorlocator/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/Rethunk-Tech/go-editorlocator/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/Rethunk-Tech/go-editorlocator/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/Rethunk-Tech/go-editorlocator/releases/tag/v0.1.0
