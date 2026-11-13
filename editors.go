@@ -1,6 +1,7 @@
 package editorlocator
 
 import (
+	"cmp"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -137,13 +138,46 @@ func (h editorHost) find() []Editor {
 			if err != nil {
 				continue
 			}
-			slices.Reverse(found)
+			slices.SortStableFunc(found, func(a, b string) int { return -naturalCompare(a, b) })
 			for _, path := range found {
 				out = h.add(out, Editor{Name: versioned(site.name, path), Program: path})
 			}
 		}
 	}
 	return out
+}
+
+// naturalCompare orders strings with runs of digits compared as numbers, so "2024.10" is after "2024.9".
+func naturalCompare(a, b string) int {
+	for a != "" && b != "" {
+		if isDigit(a[0]) && isDigit(b[0]) {
+			na, ra := digitRun(a)
+			nb, rb := digitRun(b)
+			// Leading zeros do not change the value; a longer run is a larger number.
+			na, nb = strings.TrimLeft(na, "0"), strings.TrimLeft(nb, "0")
+			if c := cmp.Or(cmp.Compare(len(na), len(nb)), strings.Compare(na, nb)); c != 0 {
+				return c
+			}
+			a, b = ra, rb
+			continue
+		}
+		if a[0] != b[0] {
+			return cmp.Compare(a[0], b[0])
+		}
+		a, b = a[1:], b[1:]
+	}
+	return cmp.Compare(len(a), len(b))
+}
+
+func isDigit(c byte) bool { return c >= '0' && c <= '9' }
+
+// digitRun splits s into its leading digits and the rest.
+func digitRun(s string) (string, string) {
+	i := 0
+	for i < len(s) && isDigit(s[i]) {
+		i++
+	}
+	return s[:i], s[i:]
 }
 
 // add keeps one entry per program: PATH often holds a link to a folder that is searched too. It also fills Kind, so

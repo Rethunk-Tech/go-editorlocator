@@ -181,3 +181,22 @@ func TestSolutionInEmptyDirIsNotCwd(t *testing.T) {
 		t.Fatalf("bracketed: %q", got)
 	}
 }
+
+func TestFindOrdersVersionsNumerically(t *testing.T) {
+	programs := t.TempDir()
+	var want []Editor
+	for _, v := range []string{"2024.9", "2024.10", "2024.2"} {
+		placeFile(t, filepath.Join(programs, "JetBrains", "JetBrains Rider "+v, "bin", "rider64.exe"), "")
+	}
+	for _, v := range []string{"2024.10", "2024.9", "2024.2"} {
+		want = append(want, Editor{Name: "Rider", Program: filepath.Join(programs, "JetBrains", "JetBrains Rider "+v, "bin", "rider64.exe"), Kind: JetBrains})
+	}
+	host := editorHost{
+		windows:  true,
+		getenv:   func(name string) string { return map[string]string{"ProgramFiles": programs}[name] },
+		lookPath: func(string) (string, error) { return "", errors.New("not on PATH") },
+	}
+	if got := host.find(); !slices.Equal(got, want) {
+		t.Fatalf("got %v, want %v", got, want)
+	}
+}
