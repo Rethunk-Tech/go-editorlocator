@@ -228,7 +228,7 @@ func KindOf(program string) Kind {
 	base := strings.ToLower(filepath.Base(program))
 	rest, namedCode := strings.CutPrefix(base, "code")
 	switch {
-	case strings.Contains(base, "rider"):
+	case strings.HasPrefix(base, "rider"), strings.HasPrefix(base, "com.jetbrains.rider"):
 		return JetBrains
 	case strings.HasPrefix(base, "devenv"):
 		return VisualStudio
@@ -271,6 +271,9 @@ func SolutionIn(dir string) string {
 	}
 	var found []string
 	for _, e := range entries {
+		if e.IsDir() {
+			continue
+		}
 		switch strings.ToLower(filepath.Ext(e.Name())) {
 		case ".sln", ".slnx":
 			found = append(found, filepath.Join(dir, e.Name()))

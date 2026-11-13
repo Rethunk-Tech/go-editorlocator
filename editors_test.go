@@ -109,6 +109,8 @@ func TestKindOfReadsTheProgramNameAlone(t *testing.T) {
 		"/opt/rider/bin/rider.sh":                          JetBrains,
 		"C:/VS/2022/Common7/IDE/devenv.exe":                VisualStudio,
 		"/usr/bin/monodevelop":                             Other,
+		"/usr/bin/provider.sh":                             Other,
+		"/var/lib/flatpak/exports/bin/com.jetbrains.Rider": JetBrains,
 	} {
 		if got := KindOf(program); got != want {
 			t.Errorf("%s: got %v, want %v", program, got, want)
@@ -152,6 +154,17 @@ func TestSolutionInNeedsExactlyOne(t *testing.T) {
 	placeFile(t, filepath.Join(dir, "B.sln"), "")
 	if got := SolutionIn(dir); got != "" {
 		t.Fatalf("two: %q", got)
+	}
+}
+
+func TestSolutionInIgnoresDirectories(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.Mkdir(filepath.Join(dir, "Old.sln"), 0o750); err != nil {
+		t.Fatal(err)
+	}
+	placeFile(t, filepath.Join(dir, "App.sln"), "")
+	if got := SolutionIn(dir); filepath.Base(got) != "App.sln" {
+		t.Fatalf("got %q", got)
 	}
 }
 
