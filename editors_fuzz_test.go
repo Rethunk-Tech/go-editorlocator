@@ -134,7 +134,7 @@ func FuzzKindOf(f *testing.F) {
 		rest, namedCode := strings.CutPrefix(base, "code")
 		var want Kind
 		switch {
-		case strings.Contains(base, "rider"):
+		case strings.HasPrefix(base, "rider"), strings.HasPrefix(base, "com.jetbrains.rider"):
 			want = JetBrains
 		case strings.HasPrefix(base, "devenv"):
 			want = VisualStudio
