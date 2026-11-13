@@ -34,7 +34,7 @@ func FuzzParseVSWhere(f *testing.F) {
 		}
 		i := 0
 		for _, install := range installs {
-			if install.ProductPath == "" {
+			if KindOf(strings.ReplaceAll(install.ProductPath, `\`, "/")) != VisualStudio {
 				continue
 			}
 			if i >= len(got) {
@@ -131,13 +131,15 @@ func FuzzKindOf(f *testing.F) {
 			t.Fatalf("directory changed kind of %q", program)
 		}
 		base := strings.ToLower(filepath.Base(program))
+		rest, namedCode := strings.CutPrefix(base, "code")
 		var want Kind
 		switch {
 		case strings.Contains(base, "rider"):
 			want = JetBrains
 		case strings.HasPrefix(base, "devenv"):
 			want = VisualStudio
-		case strings.HasPrefix(base, "code"), strings.HasPrefix(base, "codium"), strings.HasPrefix(base, "cursor"),
+		case namedCode && (rest == "" || rest[0] == '.' || rest[0] == '-'),
+			strings.HasPrefix(base, "codium"), strings.HasPrefix(base, "cursor"),
 			strings.HasPrefix(base, "com.visualstudio.code"), strings.HasPrefix(base, "com.vscodium.codium"):
 			want = VSCodeFamily
 		}

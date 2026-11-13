@@ -194,7 +194,8 @@ func parseVSWhere(data []byte) []Editor {
 	}
 	out := make([]Editor, 0, len(installs))
 	for _, install := range installs {
-		if KindOf(install.ProductPath) != VisualStudio {
+		// vswhere always emits Windows paths; KindOf uses this GOOS's separators.
+		if KindOf(strings.ReplaceAll(install.ProductPath, `\`, "/")) != VisualStudio {
 			continue
 		}
 		name := strings.TrimSpace(install.DisplayName + " " + install.Catalog.Version)
