@@ -101,9 +101,10 @@ func TestCommandExe(t *testing.T) {
 
 func TestKindOfReadsTheProgramNameAlone(t *testing.T) {
 	for program, want := range map[string]Kind{
-		"/usr/bin/code":                                    VSCodeFamily,
-		"/usr/bin/code-insiders":                           VSCodeFamily,
-		"/usr/local/bin/cursor":                            VSCodeFamily,
+		"/usr/bin/code":          VSCodeFamily,
+		"/usr/bin/code-insiders": VSCodeFamily,
+		"/usr/bin/codelite":      Other,
+		"/usr/local/bin/cursor":  VSCodeFamily,
 		"/var/lib/flatpak/exports/bin/com.vscodium.codium": VSCodeFamily,
 		"/opt/rider/bin/rider.sh":                          JetBrains,
 		"C:/VS/2022/Common7/IDE/devenv.exe":                VisualStudio,

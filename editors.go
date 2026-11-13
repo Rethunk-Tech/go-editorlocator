@@ -225,12 +225,14 @@ func commandExe(command string) string {
 // the folder around it, but the name of the program itself is what decides how it reads its arguments.
 func KindOf(program string) Kind {
 	base := strings.ToLower(filepath.Base(program))
+	rest, namedCode := strings.CutPrefix(base, "code")
 	switch {
 	case strings.Contains(base, "rider"):
 		return JetBrains
 	case strings.HasPrefix(base, "devenv"):
 		return VisualStudio
-	case strings.HasPrefix(base, "code"), strings.HasPrefix(base, "codium"), strings.HasPrefix(base, "cursor"),
+	case namedCode && (rest == "" || rest[0] == '.' || rest[0] == '-'),
+		strings.HasPrefix(base, "codium"), strings.HasPrefix(base, "cursor"),
 		strings.HasPrefix(base, "com.visualstudio.code"), strings.HasPrefix(base, "com.vscodium.codium"):
 		return VSCodeFamily
 	}
