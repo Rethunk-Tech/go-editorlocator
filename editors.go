@@ -194,7 +194,7 @@ func parseVSWhere(data []byte) []Editor {
 	}
 	out := make([]Editor, 0, len(installs))
 	for _, install := range installs {
-		if install.ProductPath == "" {
+		if KindOf(install.ProductPath) != VisualStudio {
 			continue
 		}
 		name := strings.TrimSpace(install.DisplayName + " " + install.Catalog.Version)

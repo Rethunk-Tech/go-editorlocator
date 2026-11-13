@@ -70,13 +70,14 @@ func TestEditorsFindEachInstalledVersionOnce(t *testing.T) {
 
 func TestParseVSWhereListsEveryInstall(t *testing.T) {
 	got := parseVSWhere([]byte(`[
-		{"displayName":"Visual Studio Community 2022","productPath":"C:\\VS\\2022\\devenv.exe","catalog":{"productDisplayVersion":"17.12.3"}},
-		{"displayName":"Visual Studio Professional 2019","productPath":"C:\\VS\\2019\\devenv.exe","catalog":{"productDisplayVersion":"16.11.40"}},
-		{"displayName":"Build Tools","productPath":""}
+		{"displayName":"Visual Studio Community 2022","productPath":"C:/VS/2022/devenv.exe","catalog":{"productDisplayVersion":"17.12.3"}},
+		{"displayName":"Visual Studio Professional 2019","productPath":"C:/VS/2019/devenv.exe","catalog":{"productDisplayVersion":"16.11.40"}},
+		{"displayName":"Build Tools","productPath":""},
+		{"displayName":"Visual Studio Build Tools 2019","productPath":"C:/BuildTools/Common7/Tools/LaunchDevCmd.bat","catalog":{"productDisplayVersion":"16.8.4"}}
 	]`))
 	want := []Editor{
-		{Name: "Visual Studio Community 2022 17.12.3", Program: `C:\VS\2022\devenv.exe`},
-		{Name: "Visual Studio Professional 2019 16.11.40", Program: `C:\VS\2019\devenv.exe`},
+		{Name: "Visual Studio Community 2022 17.12.3", Program: "C:/VS/2022/devenv.exe"},
+		{Name: "Visual Studio Professional 2019 16.11.40", Program: "C:/VS/2019/devenv.exe"},
 	}
 	if !slices.Equal(got, want) {
 		t.Fatalf("got %v", got)
