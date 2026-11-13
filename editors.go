@@ -262,11 +262,15 @@ func FileArgs(program, file string, line, column int) []string {
 
 // SolutionIn is the folder's one solution file, or "" when it holds none or a choice of several.
 func SolutionIn(dir string) string {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return ""
+	}
 	var found []string
-	for _, pattern := range []string{"*.sln", "*.slnx"} {
-		matches, err := filepath.Glob(filepath.Join(dir, pattern))
-		if err == nil {
-			found = append(found, matches...)
+	for _, e := range entries {
+		switch strings.ToLower(filepath.Ext(e.Name())) {
+		case ".sln", ".slnx":
+			found = append(found, filepath.Join(dir, e.Name()))
 		}
 	}
 	if len(found) != 1 {

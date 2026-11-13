@@ -153,3 +153,17 @@ func TestSolutionInNeedsExactlyOne(t *testing.T) {
 		t.Fatalf("two: %q", got)
 	}
 }
+
+func TestSolutionInEmptyDirIsNotCwd(t *testing.T) {
+	dir := t.TempDir()
+	placeFile(t, filepath.Join(dir, "App.sln"), "")
+	t.Chdir(dir)
+	if got := SolutionIn(""); got != "" {
+		t.Fatalf("empty dir: %q", got)
+	}
+	bracket := filepath.Join(t.TempDir(), "proj[1]")
+	placeFile(t, filepath.Join(bracket, "App.sln"), "")
+	if got := SolutionIn(bracket); filepath.Base(got) != "App.sln" {
+		t.Fatalf("bracketed: %q", got)
+	}
+}
