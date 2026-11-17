@@ -101,10 +101,12 @@ func TestCommandExe(t *testing.T) {
 
 func TestKindOfReadsTheProgramNameAlone(t *testing.T) {
 	for program, want := range map[string]Kind{
-		"/usr/bin/code":          VSCodeFamily,
-		"/usr/bin/code-insiders": VSCodeFamily,
-		"/usr/bin/codelite":      Other,
-		"/usr/local/bin/cursor":  VSCodeFamily,
+		"/usr/bin/code":                                    VSCodeFamily,
+		"/usr/bin/code-insiders":                           VSCodeFamily,
+		"/usr/bin/codelite":                                Other,
+		"C:/Editors/code.cmd":                              VSCodeFamily,
+		"C:/Editors/code.exe":                              VSCodeFamily,
+		"/usr/local/bin/cursor":                            VSCodeFamily,
 		"/var/lib/flatpak/exports/bin/com.vscodium.codium": VSCodeFamily,
 		"/opt/rider/bin/rider.sh":                          JetBrains,
 		"C:/VS/2022/Common7/IDE/devenv.exe":                VisualStudio,
@@ -179,6 +181,43 @@ func TestSolutionInEmptyDirIsNotCwd(t *testing.T) {
 	placeFile(t, filepath.Join(bracket, "App.sln"), "")
 	if got := SolutionIn(bracket); filepath.Base(got) != "App.sln" {
 		t.Fatalf("bracketed: %q", got)
+	}
+}
+
+func TestNaturalCompareOrdersDigitRuns(t *testing.T) {
+	for _, tc := range []struct {
+		a, b string
+		want int
+	}{
+		{"9", "10", -1},
+		{"10", "9", 1},
+		{"10", "10", 0},
+		{"2024.9", "2024.10", -1},
+		{"a01", "a1", 0},
+		{"a", "a1", -1},
+		{"", "a", -1},
+		{"9x", "10x", -1},
+	} {
+		if got := naturalCompare(tc.a, tc.b); got != tc.want {
+			t.Errorf("naturalCompare(%q, %q) = %d, want %d", tc.a, tc.b, got, tc.want)
+		}
+	}
+}
+
+func TestAddResolvesSymlinksToOneProgram(t *testing.T) {
+	dir := t.TempDir()
+	target := filepath.Join(dir, "code")
+	placeFile(t, target, "")
+	link := filepath.Join(dir, "on-path")
+	if err := os.Symlink(target, link); err != nil {
+		t.Fatal(err)
+	}
+	var host editorHost
+	got := host.add(nil, Editor{Name: "VS Code", Program: target})
+	got = host.add(got, Editor{Name: "VS Code", Program: link})
+	want := []Editor{{Name: "VS Code", Program: target, Kind: VSCodeFamily}}
+	if !slices.Equal(got, want) {
+		t.Fatalf("got %v, want %v", got, want)
 	}
 }
 
