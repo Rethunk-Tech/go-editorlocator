@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"runtime"
 	"slices"
 	"testing"
 )
@@ -32,6 +33,24 @@ func TestFindLabelsEveryProgramAndListsItOnce(t *testing.T) {
 			t.Errorf("%s listed twice", e.Program)
 		}
 		seen[e.Program] = true
+	}
+}
+
+func TestFindDiscoversInstallFolderEditors(t *testing.T) {
+	root := t.TempDir()
+	t.Setenv("HOME", root)
+	t.Setenv("LOCALAPPDATA", root)
+	t.Setenv("ProgramFiles", filepath.Join(root, "Program Files"))
+	var program string
+	if runtime.GOOS == "windows" {
+		program = filepath.Join(root, "Programs", "Microsoft VS Code", "bin", "code.cmd")
+	} else {
+		program = filepath.Join(root, ".local/share/JetBrains/Toolbox/apps/rider/bin/rider.sh")
+	}
+	placeFile(t, program, "")
+	found := Find()
+	if !slices.ContainsFunc(found, func(e Editor) bool { return e.Program == program }) {
+		t.Fatalf("install folder missed: %v", found)
 	}
 }
 
