@@ -56,11 +56,13 @@ func TestAssociatedEditorsFindsRegisteredPrograms(t *testing.T) {
 	}
 	command := `"` + exe + `" "%1"`
 	tests := []struct {
-		name  string
-		setup func(t *testing.T, fileType string) []string
+		name     string
+		fileType string
+		setup    func(t *testing.T, fileType string) []string
 	}{
 		{
-			name: "OpenWithProgids",
+			name:     "OpenWithProgids",
+			fileType: ".elwa",
 			setup: func(t *testing.T, fileType string) []string {
 				id := "EditorLocator.OpenWithProgids"
 				createClassKey(t, registry.CLASSES_ROOT, fileType)
@@ -72,7 +74,8 @@ func TestAssociatedEditorsFindsRegisteredPrograms(t *testing.T) {
 			},
 		},
 		{
-			name: "two OpenWithProgids",
+			name:     "two OpenWithProgids",
+			fileType: ".elwb",
 			setup: func(t *testing.T, fileType string) []string {
 				exe2 := cloneExecutable(t, "eltest2.exe")
 				id1, id2 := "EditorLocator.ProgA", "EditorLocator.ProgB"
@@ -90,7 +93,8 @@ func TestAssociatedEditorsFindsRegisteredPrograms(t *testing.T) {
 			},
 		},
 		{
-			name: "OpenWithList applications",
+			name:     "OpenWithList applications",
+			fileType: ".elwc",
 			setup: func(t *testing.T, fileType string) []string {
 				exe2 := cloneExecutable(t, "elowl2.exe")
 				app1, app2 := "elowl1.exe", "elowl2.exe"
@@ -104,7 +108,8 @@ func TestAssociatedEditorsFindsRegisteredPrograms(t *testing.T) {
 			},
 		},
 		{
-			name: "FileExts OpenWithList skips MRUList",
+			name:     "FileExts OpenWithList skips MRUList",
+			fileType: ".elwd",
 			setup: func(t *testing.T, fileType string) []string {
 				app := "elmru.exe"
 				list := fileExtsKey + fileType + `\OpenWithList`
@@ -121,7 +126,8 @@ func TestAssociatedEditorsFindsRegisteredPrograms(t *testing.T) {
 			},
 		},
 		{
-			name: "REG_EXPAND_SZ open command",
+			name:     "REG_EXPAND_SZ open command",
+			fileType: ".elwe",
 			setup: func(t *testing.T, fileType string) []string {
 				id := "EditorLocator.Expand"
 				t.Setenv("EDITORLOCATOR_TEST_EXE", exe)
@@ -139,11 +145,10 @@ func TestAssociatedEditorsFindsRegisteredPrograms(t *testing.T) {
 			},
 		},
 	}
-	for i, tc := range tests {
+	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			fileType := ".elw" + string(rune('a'+i))
-			want := tc.setup(t, fileType)
-			found := associatedEditors([]string{fileType})
+			want := tc.setup(t, tc.fileType)
+			found := associatedEditors([]string{tc.fileType})
 			for _, w := range want {
 				if !slices.ContainsFunc(found, func(e Editor) bool { return e.Program == w }) {
 					t.Fatalf("%s not found in %v", w, found)
@@ -183,11 +188,11 @@ func cloneExecutable(t *testing.T, name string) string {
 		t.Fatal(err)
 	}
 	dst := filepath.Join(t.TempDir(), name)
-	data, err := os.ReadFile(src)
+	data, err := os.ReadFile(src) //nolint:gosec // G304: src is this test binary from os.Executable.
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(dst, data, 0o755); err != nil {
+	if err := os.WriteFile(dst, data, 0o600); err != nil {
 		t.Fatal(err)
 	}
 	return dst
