@@ -192,7 +192,7 @@ func cloneExecutable(t *testing.T, name string) string {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(dst, data, 0o600); err != nil {
+	if err := os.WriteFile(dst, data, 0o600); err != nil { //nolint:gosec // G703: dst is under t.TempDir().
 		t.Fatal(err)
 	}
 	return dst
