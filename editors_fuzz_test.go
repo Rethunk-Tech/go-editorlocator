@@ -2,6 +2,7 @@ package editorlocator
 
 import (
 	"encoding/json"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -145,6 +146,97 @@ func FuzzKindOf(f *testing.F) {
 		}
 		if got != want {
 			t.Fatalf("%q: got %v, want %v", program, got, want)
+		}
+	})
+}
+
+func FuzzVersioned(f *testing.F) {
+	f.Add("Rider", `{"version":"2025.1.2"}`)
+	f.Add("Rider", `{"version":"2024.3"}`)
+	f.Add("Rider", `{"version":""}`)
+	f.Add("Rider", `{}`)
+	f.Add("Rider", `not json`)
+	f.Fuzz(func(t *testing.T, name, body string) {
+		dir := t.TempDir()
+		program := filepath.Join(dir, "bin", "rider.sh")
+		placeFile(t, program, "")
+		placeFile(t, filepath.Join(dir, "product-info.json"), body)
+		got := versioned(name, program)
+		var info struct {
+			Version string `json:"version"`
+		}
+		if json.Unmarshal([]byte(body), &info) != nil || info.Version == "" {
+			if got != name {
+				t.Fatalf("bad manifest: got %q, want %q", got, name)
+			}
+			return
+		}
+		want := name + " " + info.Version
+		if got != want {
+			t.Fatalf("got %q, want %q", got, want)
+		}
+		if len(got) > len(name)+1+len(body) {
+			t.Fatalf("result %d longer than inputs %d+%d", len(got), len(name), len(body))
+		}
+	})
+}
+
+func FuzzNaturalCompare(f *testing.F) {
+	f.Add("2024.9", "2024.10", "2024.2")
+	f.Add("9", "10", "2")
+	f.Add("00", "0", "1")
+	f.Add("a", "b", "c")
+	f.Fuzz(func(t *testing.T, a, b, c string) {
+		if naturalCompare(a, a) != 0 {
+			t.Fatalf("not reflexive: %q", a)
+		}
+		ab, ba := naturalCompare(a, b), naturalCompare(b, a)
+		if ab == 0 && ba != 0 {
+			t.Fatalf("zero not symmetric: %q vs %q", a, b)
+		}
+		if ab < 0 && ba <= 0 || ab > 0 && ba >= 0 {
+			t.Fatalf("not antisymmetric: %q vs %q = %d, reverse %d", a, b, ab, ba)
+		}
+		if ab <= 0 && naturalCompare(b, c) <= 0 && naturalCompare(a, c) > 0 {
+			t.Fatalf("not transitive: %q <= %q <= %q", a, b, c)
+		}
+	})
+}
+
+func FuzzSolutionIn(f *testing.F) {
+	f.Add("App.sln")
+	f.Add("A.slnx")
+	f.Add("B.sln")
+	f.Add("readme.md")
+	f.Fuzz(func(t *testing.T, name string) {
+		if name == "" || name == "." || name == ".." || strings.ContainsRune(name, 0) || strings.ContainsRune(name, '/') || strings.ContainsRune(name, os.PathSeparator) {
+			return
+		}
+		dir := t.TempDir()
+		path := filepath.Join(dir, name)
+		rel, err := filepath.Rel(dir, path)
+		if err != nil || !filepath.IsLocal(rel) {
+			return
+		}
+		if err := os.WriteFile(path, nil, 0o600); err != nil {
+			return
+		}
+		got := SolutionIn(dir)
+		if got != "" {
+			gotRel, err := filepath.Rel(dir, got)
+			if err != nil || !filepath.IsLocal(gotRel) {
+				t.Fatalf("escaped root: %q from %q", got, dir)
+			}
+		}
+		ext := strings.ToLower(filepath.Ext(name))
+		if ext == ".sln" || ext == ".slnx" {
+			if got != path {
+				t.Fatalf("got %q, want %q", got, path)
+			}
+			return
+		}
+		if got != "" {
+			t.Fatalf("non-solution %q listed as %q", name, got)
 		}
 	})
 }
