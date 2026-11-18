@@ -240,6 +240,27 @@ func TestAddResolvesSymlinksToOneProgram(t *testing.T) {
 	}
 }
 
+func TestFindSkipsAMalformedInstallGlob(t *testing.T) {
+	code := filepath.Join(t.TempDir(), "code")
+	placeFile(t, code, "")
+	host := editorHost{
+		getenv: func(string) string {
+			// Unclosed '[' makes filepath.Glob return ErrBadPattern for every ${HOME}/... site.
+			return "["
+		},
+		lookPath: func(bin string) (string, error) {
+			if bin == "code" {
+				return code, nil
+			}
+			return "", errors.New("not on PATH")
+		},
+	}
+	got := host.find()
+	if !slices.ContainsFunc(got, func(e Editor) bool { return e.Program == code }) {
+		t.Fatalf("PATH editor dropped after bad glob: %v", got)
+	}
+}
+
 func TestFindOrdersVersionsNumerically(t *testing.T) {
 	programs := t.TempDir()
 	var want []Editor

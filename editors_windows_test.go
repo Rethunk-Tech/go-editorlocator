@@ -3,6 +3,7 @@
 package editorlocator
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
@@ -10,6 +11,14 @@ import (
 
 	"golang.org/x/sys/windows/registry"
 )
+
+func TestMain(m *testing.M) {
+	if os.Getenv("EDITORLOCATOR_FAKE_VSWHERE") == "1" {
+		_, _ = os.Stdout.WriteString(os.Getenv("EDITORLOCATOR_FAKE_VSWHERE_JSON"))
+		os.Exit(0)
+	}
+	os.Exit(m.Run())
+}
 
 func TestAssociatedEditorsReadsTheProgramsRegisteredForAFileType(t *testing.T) {
 	const (
@@ -144,6 +153,32 @@ func TestAssociatedEditorsFindsRegisteredPrograms(t *testing.T) {
 				return []string{exe}
 			},
 		},
+		{
+			name:     "FileExts UserChoice",
+			fileType: ".elwf",
+			setup: func(t *testing.T, fileType string) []string {
+				id := "EditorLocator.UserChoice"
+				choice := fileExtsKey + fileType + `\UserChoice`
+				createClassKey(t, registry.CURRENT_USER, fileExtsKey+fileType)
+				if err := createClassKey(t, registry.CURRENT_USER, choice).SetStringValue("ProgId", id); err != nil {
+					t.Fatal(err)
+				}
+				setOpenCommand(t, id, command)
+				return []string{exe}
+			},
+		},
+		{
+			name:     "default class ProgID",
+			fileType: ".elwg",
+			setup: func(t *testing.T, fileType string) []string {
+				id := "EditorLocator.DefaultClass"
+				if err := createClassKey(t, registry.CLASSES_ROOT, fileType).SetStringValue("", id); err != nil {
+					t.Fatal(err)
+				}
+				setOpenCommand(t, id, command)
+				return []string{exe}
+			},
+		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -178,6 +213,76 @@ func setOpenCommand(t *testing.T, class, command string) {
 	createClassKey(t, registry.CLASSES_ROOT, class+`\shell\open`)
 	if err := createClassKey(t, registry.CLASSES_ROOT, class+`\shell\open\command`).SetStringValue("", command); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestAssociatedEditorsNamesTheProgramFromItsFamily(t *testing.T) {
+	for _, tc := range []struct {
+		fileType, exeName, wantName string
+	}{
+		{".elna", "rider64.exe", "Rider"},
+		{".elnb", "devenv.exe", "Visual Studio"},
+	} {
+		t.Run(tc.wantName, func(t *testing.T) {
+			program := cloneExecutable(t, tc.exeName)
+			id := "EditorLocator.Label." + tc.wantName
+			createClassKey(t, registry.CLASSES_ROOT, tc.fileType)
+			if err := createClassKey(t, registry.CLASSES_ROOT, tc.fileType+`\OpenWithProgids`).SetStringValue(id, ""); err != nil {
+				t.Fatal(err)
+			}
+			setOpenCommand(t, id, `"`+program+`" "%1"`)
+			found := associatedEditors([]string{tc.fileType})
+			if !slices.ContainsFunc(found, func(e Editor) bool { return e.Program == program && e.Name == tc.wantName }) {
+				t.Fatalf("got %v, want %s at %s", found, tc.wantName, program)
+			}
+		})
+	}
+}
+
+func TestAssociatedEditorsOmitsTheSolutionPicker(t *testing.T) {
+	fileType := ".elomit"
+	launcher := cloneExecutable(t, "VSLauncher.exe")
+	id := "EditorLocator.VSLauncher"
+	createClassKey(t, registry.CLASSES_ROOT, fileType)
+	if err := createClassKey(t, registry.CLASSES_ROOT, fileType+`\OpenWithProgids`).SetStringValue(id, ""); err != nil {
+		t.Fatal(err)
+	}
+	setOpenCommand(t, id, `"`+launcher+`" "%1"`)
+	found := associatedEditors([]string{fileType})
+	if len(found) != 0 {
+		t.Fatalf("VSLauncher listed: %v", found)
+	}
+}
+
+func TestFindAddsEachVisualStudioVswhereLists(t *testing.T) {
+	root := t.TempDir()
+	t.Setenv("ProgramFiles(x86)", root)
+	devenv := cloneExecutable(t, "devenv.exe")
+	t.Setenv("EDITORLOCATOR_FAKE_VSWHERE", "1")
+	t.Setenv("EDITORLOCATOR_FAKE_VSWHERE_JSON", fmt.Sprintf(
+		`[{"displayName":"Visual Studio Community 2022","productPath":%q,"catalog":{"productDisplayVersion":"17.12.3"}}]`,
+		devenv,
+	))
+	src, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	data, err := os.ReadFile(src) //nolint:gosec // G304: src is this test binary from os.Executable.
+	if err != nil {
+		t.Fatal(err)
+	}
+	vswhere := filepath.Join(root, "Microsoft Visual Studio", "Installer", "vswhere.exe")
+	if err := os.MkdirAll(filepath.Join(root, "Microsoft Visual Studio", "Installer"), 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(vswhere, data, 0o700); err != nil { //nolint:gosec // G703: vswhere is under t.TempDir().
+		t.Fatal(err)
+	}
+	found := Find()
+	if !slices.ContainsFunc(found, func(e Editor) bool {
+		return e.Program == devenv && e.Name == "Visual Studio Community 2022 17.12.3" && e.Kind == VisualStudio
+	}) {
+		t.Fatalf("vswhere install missed: %v", found)
 	}
 }
 
