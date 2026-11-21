@@ -6,6 +6,8 @@ Notable changes to `go-editorlocator`. The format follows
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-11-21
+
 ### Fixed
 
 - Install folders are ordered by numeric version.
@@ -30,6 +32,7 @@ Notable changes to `go-editorlocator`. The format follows
 - `FileArgs` builds the arguments that open a file at a line and column in a given program.
 - `SolutionIn` reports a folder's single solution file.
 
-[Unreleased]: https://github.com/Rethunk-Tech/go-editorlocator/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/Rethunk-Tech/go-editorlocator/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/Rethunk-Tech/go-editorlocator/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/Rethunk-Tech/go-editorlocator/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/Rethunk-Tech/go-editorlocator/releases/tag/v0.1.0
