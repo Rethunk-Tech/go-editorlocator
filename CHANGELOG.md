@@ -6,6 +6,13 @@ Notable changes to `go-editorlocator`. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- Install folders are ordered by numeric version.
+- `KindOf` no longer matches `rider` as a substring, treats any basename starting with `code` as VS Code, and recognizes `vswhere` `devenv` paths on non-Windows.
+- A directory named `.sln` is not a solution, and `SolutionIn("")` no longer means this folder.
+- Visual Studio Build Tools is not listed as an editor.
+
 ## [0.1.1] - 2026-11-12
 
 ### Fixed
